@@ -3,8 +3,8 @@
 #include <Firebase_ESP_Client.h>
 
 //================ WIFI =================
-const char* ssid = "rathiot";
-const char* password = "12345678*";
+const char* ssid = "";
+const char* password = "*";
 
 WiFiClient client;
 
@@ -14,15 +14,15 @@ unsigned long lastWifiCheck = 0;
 bool offlineMode = false;
 
 //================ THINGSPEAK =================
-unsigned long channelSensor = 3250622;
-const char* writeKeySensor = "DIF6E7LDGO25BOED";
+unsigned long channelSensor = ;
+const char* writeKeySensor = "";
 
-unsigned long channelPump = 3298639;
-const char* writeKeyPump = "57H5NV7710JR6OC8";
+unsigned long channelPump = ;
+const char* writeKeyPump = "";
 
 //================ FIREBASE =================
-#define API_KEY "AIzaSyAIzstt1xaSJrRnBlFh6GgXd8KUPguAkxI"
-#define DATABASE_URL "smarthydroponic-f1a49-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define API_KEY ""
+#define DATABASE_URL ""
 
 FirebaseData fbdo;
 FirebaseAuth auth;
