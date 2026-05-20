@@ -1,0 +1,287 @@
+# 🌱 Hydroponic Smart Farm System (ESP32 + Firebase + ThingSpeak)
+
+ระบบ **Hydroponic Smart Farm** เป็นระบบควบคุมการปลูกพืชไฮโดรโปนิกส์อัตโนมัติ โดยใช้ **ESP32** เป็นตัวควบคุมหลัก เชื่อมต่อกับ **Firebase Realtime Database** สำหรับควบคุมผ่านแอป และส่งข้อมูลเซนเซอร์ไปยัง **ThingSpeak** เพื่อบันทึกและวิเคราะห์ข้อมูล
+
+ระบบสามารถควบคุมค่า **pH**, **TDS**, และ **ระดับน้ำ** แบบอัตโนมัติ โดยใช้ **PID Control Algorithm** เพื่อปรับปุ๋ย กรด และเบสให้เหมาะสมกับพืชที่เลือก
+
+---
+
+# 🚀 Features
+
+* 🌐 เชื่อมต่อ WiFi
+* ☁️ เชื่อมต่อ **Firebase Realtime Database**
+* 📊 ส่งข้อมูล Sensor ไปยัง **ThingSpeak**
+* 🤖 ระบบ **AUTO MODE**
+
+  * ควบคุม pH อัตโนมัติ
+  * ควบคุมค่า TDS อัตโนมัติ
+  * ควบคุมระดับน้ำอัตโนมัติ
+* 🎮 **MANUAL MODE**
+
+  * เปิด/ปิดปั๊มผ่าน Firebase / Mobile App
+* 🌿 ระบบ **Plant Profile**
+
+  * คะน้า (Kana)
+  * Green Cos
+* 🧠 ใช้ **PID Control** สำหรับปรับค่า pH และ TDS
+* 📡 มี **Offline Mode** เมื่อ WiFi หลุด
+* 🔄 ระบบ **Auto WiFi Reconnect**
+
+---
+
+# 🧰 Hardware Used
+
+* ESP32
+* pH Sensor
+* TDS Sensor
+* Ultrasonic Sensor (Water Level)
+* Relay Module
+* Water Pump
+* Fertilizer Pump A / B
+* Acid Pump
+* Base Pump
+* Mixing Pump
+* Fan
+* Grow Light
+
+---
+
+# 📊 Sensors
+
+| Sensor            | Function                    |
+| ----------------- | --------------------------- |
+| pH Sensor         | วัดค่าความเป็นกรดด่างของน้ำ |
+| TDS Sensor        | วัดค่าความเข้มข้นสารอาหาร   |
+| Ultrasonic Sensor | วัดระดับน้ำ                 |
+
+---
+
+# ⚙️ Controlled Devices
+
+| Device       | Function      |
+| ------------ | ------------- |
+| Water Pump   | เติมน้ำในระบบ |
+| Fertilizer A | เติมปุ๋ย A    |
+| Fertilizer B | เติมปุ๋ย B    |
+| Acid Pump    | ลดค่า pH      |
+| Base Pump    | เพิ่มค่า pH   |
+| Mix Pump     | ผสมสารอาหาร   |
+| Fan          | ระบายอากาศ    |
+| Light        | ไฟปลูกพืช     |
+
+---
+
+# 🌿 Plant Profiles
+
+ระบบสามารถเปลี่ยนค่าการควบคุมตามชนิดพืช
+
+### Kana
+
+| Parameter    | Value           |
+| ------------ | --------------- |
+| pH           | 6.0 - 6.8       |
+| TDS          | 1200 - 1600 ppm |
+| pH Setpoint  | 6.3             |
+| TDS Setpoint | 1400 ppm        |
+
+### Green Cos
+
+| Parameter    | Value          |
+| ------------ | -------------- |
+| pH           | 5.5 - 6.5      |
+| TDS          | 800 - 1200 ppm |
+| pH Setpoint  | 6.0            |
+| TDS Setpoint | 1000 ppm       |
+
+---
+
+# 🧠 Control Algorithm
+
+ระบบใช้ **PID Control** เพื่อปรับค่า pH และ TDS
+
+### pH Control
+
+* ถ้า pH สูง → เปิด **Acid Pump**
+* ถ้า pH ต่ำ → เปิด **Base Pump**
+
+### TDS Control
+
+* ถ้า TDS ต่ำ → เติม **Fertilizer A + B**
+
+Deadband ถูกใช้เพื่อลดการเปิดปั๊มบ่อยเกินไป
+
+---
+
+# ☁️ Firebase Structure
+
+```json
+mode: "auto"
+
+profile: "kana"
+
+pump
+ ├── water
+ ├── fertA
+ ├── fertB
+ ├── acid
+ ├── base
+ ├── fan
+ └── light
+```
+
+---
+
+# 📡 ThingSpeak Fields
+
+### Sensor Channel
+
+| Field  | Data        |
+| ------ | ----------- |
+| Field1 | pH          |
+| Field2 | TDS         |
+| Field3 | Water Level |
+| Field4 | Temperature |
+| Field5 | Humidity    |
+
+### Pump Status Channel
+
+| Field  | Data       |
+| ------ | ---------- |
+| Field1 | Water Pump |
+| Field2 | FertA      |
+| Field3 | FertB      |
+| Field4 | Acid       |
+| Field5 | Base       |
+| Field6 | Mix        |
+| Field7 | Fan        |
+| Field8 | Light      |
+
+---
+
+# 🔌 Pin Configuration
+
+| Pin | Device             |
+| --- | ------------------ |
+| 14  | Fertilizer A       |
+| 27  | Fertilizer B       |
+| 25  | Water Pump         |
+| 12  | Acid Pump          |
+| 13  | Base Pump          |
+| 26  | Mix Pump           |
+| 33  | Fan                |
+| 32  | Light              |
+| 34  | pH Sensor          |
+| 35  | TDS Sensor         |
+| 5   | Ultrasonic Trigger |
+| 18  | Ultrasonic Echo    |
+
+---
+
+# 🔄 System Modes
+
+### AUTO MODE
+
+ESP32 ควบคุมระบบทั้งหมดอัตโนมัติ
+
+* pH Control
+* TDS Control
+* Water Level Control
+
+### MANUAL MODE
+
+ผู้ใช้สามารถควบคุมอุปกรณ์ผ่าน
+
+* Mobile App
+* Firebase
+
+---
+
+# 📶 WiFi Handling
+
+ระบบมีการจัดการ WiFi ดังนี้
+
+* Auto reconnect
+* Retry 2 ครั้ง
+* ถ้าเชื่อมต่อไม่ได้ → เข้า **Offline Mode**
+* จะลอง reconnect ทุก 5 นาที
+
+---
+
+# 📂 Project Structure
+
+```
+HydroponicSmartFarm
+│
+├── main.ino
+├── sensors
+├── control
+└── firebase
+```
+
+---
+
+# 🛠 Installation
+
+### 1️⃣ Clone Repository
+
+```
+git clone https://github.com/yourusername/hydroponic-smart-farm.git
+```
+
+### 2️⃣ Install Libraries
+
+ติดตั้ง Library ต่อไปนี้ใน Arduino IDE
+
+* WiFi
+* ThingSpeak
+* Firebase ESP Client
+
+### 3️⃣ Setup WiFi
+
+แก้ไขในโค้ด
+
+```
+const char* ssid = "YOUR_WIFI";
+const char* password = "YOUR_PASSWORD";
+```
+
+### 4️⃣ Setup Firebase
+
+แก้ไข
+
+```
+#define API_KEY "YOUR_API_KEY"
+#define DATABASE_URL "YOUR_DATABASE_URL"
+```
+
+### 5️⃣ Upload Code
+
+อัปโหลดไปยัง **ESP32**
+
+---
+
+# 📊 Serial Monitor
+
+ESP32 จะแสดงข้อมูลระบบ เช่น
+
+* Sensor Data
+* PID Error
+* Pump Status
+* Water Level
+* System Mode
+
+---
+
+# 🧑‍💻 Developer
+
+Name: Chatrat
+Major: Computer Engineering
+University: Rajamangala University of Technology Lanna
+
+Project: **Smart Hydroponic Farm System**
+
+---
+
+# 📌 Note
+
+โปรเจกต์นี้ถูกพัฒนาขึ้นเพื่อใช้ในการศึกษาและพัฒนาระบบ **Smart Agriculture / IoT Hydroponic System**
