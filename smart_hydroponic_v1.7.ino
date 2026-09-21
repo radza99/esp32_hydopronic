@@ -9,7 +9,6 @@
  *  - MIN_DOSE_TIME  250 ->  500 ms (dose floor: จ่ายทุกครั้งที่ออกนอก deadband)
  *  - Kp_ph  800 -> 5000
  *  - Kp_tds 2.0 -> 10.0
- *  - PID pH/TDS: ใช้ constrain(MIN, MAX) แทนการเช็ก >= MIN_DOSE_TIME
  * =====================================================
  */
 
