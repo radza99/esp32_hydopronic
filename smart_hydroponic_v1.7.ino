@@ -130,7 +130,7 @@ int singleCalCount = 0;
 const float TDS_CALIBRATION = 1.4;
 
 //================ PID CONFIGURATION (< 20L SMALL TANK) =================
-float Kp_ph = 800.0;
+float Kp_ph  = 5000.0;   // จากเดิม 800
 float Ki_ph = 0.2;
 float Kd_ph = 150.0;
 
@@ -144,7 +144,7 @@ unsigned long phDoseStartTime = 0;
 bool isPHDosing = false;
 int activePHPumpPin = -1;
 
-float Kp_tds = 2.0;
+float Kp_tds = 10.0;     // จากเดิม 2.0
 float Ki_tds = 0.005;
 float Kd_tds = 0.5;
 
