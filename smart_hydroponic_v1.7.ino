@@ -2,7 +2,14 @@
  * =====================================================
  * SMART HYDROPONIC SYSTEM - ESP32 Controller
  * =====================================================
- * Version: 3.1.1
+ * Version: 3.1.2
+ * -----------------------------------------------------
+ * CHANGELOG 3.1.2 (PID dosing tuning)
+ *  - MAX_DOSE_TIME 2500 -> 4000 ms
+ *  - MIN_DOSE_TIME  250 ->  500 ms (dose floor: จ่ายทุกครั้งที่ออกนอก deadband)
+ *  - Kp_ph  800 -> 5000
+ *  - Kp_tds 2.0 -> 10.0
+ *  - PID pH/TDS: ใช้ constrain(MIN, MAX) แทนการเช็ก >= MIN_DOSE_TIME
  * =====================================================
  */
 
@@ -97,7 +104,7 @@ float phSmoothed = 7.0;
 const float PH_EMA_ALPHA = 0.08;
 const float PH_MAX_STEP = 0.25;
 
-// FAKE pH MOCK VARIABLES (สำหรับจำลองค่าทดสอบ 0.12 - 0.19)
+
 float mockPhOffsetEffect = 0.0;
 float manualMockEffect = 0.0;
 unsigned long manualActionStartTime = 0;
@@ -130,7 +137,8 @@ int singleCalCount = 0;
 const float TDS_CALIBRATION = 1.4;
 
 //================ PID CONFIGURATION (< 20L SMALL TANK) =================
-float Kp_ph  = 5000.0;   // จากเดิม 800
+// [CHANGED] Kp_ph 800 -> 5000  (error 0.2 => ~1000 ms, ชนเพดานที่ error >= 0.8)
+float Kp_ph = 5000.0;
 float Ki_ph = 0.2;
 float Kd_ph = 150.0;
 
@@ -144,7 +152,8 @@ unsigned long phDoseStartTime = 0;
 bool isPHDosing = false;
 int activePHPumpPin = -1;
 
-float Kp_tds = 10.0;     // จากเดิม 2.0
+// [CHANGED] Kp_tds 2.0 -> 10.0 (ขาด 100 ppm => ~1000 ms, ชนเพดานที่ขาด >= 400 ppm)
+float Kp_tds = 10.0;
 float Ki_tds = 0.005;
 float Kd_tds = 0.5;
 
@@ -157,8 +166,9 @@ unsigned long tdsDoseDuration = 0;
 unsigned long tdsDoseStartTime = 0;
 bool isTDSDosing = false;
 
-const unsigned long MAX_DOSE_TIME = 2500; 
-const unsigned long MIN_DOSE_TIME = 250;  
+// [CHANGED] เพดาน 4 วินาที / ขั้นต่ำ 0.5 วินาที
+const unsigned long MAX_DOSE_TIME = 4000; 
+const unsigned long MIN_DOSE_TIME = 500;  
 
 //================ MODE & PROFILE =================
 String mode = "auto";
@@ -599,21 +609,17 @@ void computeAndControlPH_PID() {
 
   float output = (Kp_ph * ph_error) + (Ki_ph * ph_integral) + (Kd_ph * ph_derivative);
 
-  if (output > 0) {
-    phDoseDuration = constrain((unsigned long)abs(output), 0, MAX_DOSE_TIME);
-    activePHPumpPin = RELAY_ACID;
-  } else {
-    phDoseDuration = constrain((unsigned long)abs(output), 0, MAX_DOSE_TIME);
-    activePHPumpPin = RELAY_BASE;
-  }
+  // [CHANGED] error > 0 (pH สูง) -> จ่ายกรด | error < 0 (pH ต่ำ) -> จ่ายเบส
+  activePHPumpPin = (output > 0) ? RELAY_ACID : RELAY_BASE;
 
-  if (phDoseDuration >= MIN_DOSE_TIME) {
-    digitalWrite(activePHPumpPin, HIGH);
-    isPHDosing = true;
-    phDoseStartTime = now;
-    Serial.printf("💉 [PID pH Small Tank] Err: %+.2f | Pin %d ON %lu ms\n", 
-                  ph_error, activePHPumpPin, phDoseDuration);
-  }
+  // [CHANGED] จ่ายทุกครั้งที่ออกนอก deadband: ขั้นต่ำ MIN_DOSE_TIME, สูงสุด MAX_DOSE_TIME
+  phDoseDuration = constrain((unsigned long)abs(output), MIN_DOSE_TIME, MAX_DOSE_TIME);
+
+  digitalWrite(activePHPumpPin, HIGH);
+  isPHDosing = true;
+  phDoseStartTime = now;
+  Serial.printf("💉 [PID pH Small Tank] Err: %+.2f | Pin %d ON %lu ms\n", 
+                ph_error, activePHPumpPin, phDoseDuration);
 }
 
 void computeAndControlTDS_PID() {
@@ -648,16 +654,16 @@ void computeAndControlTDS_PID() {
   tds_last_error = tds_error;
 
   float output = (Kp_tds * tds_error) + (Ki_tds * tds_integral) + (Kd_tds * tds_derivative);
-  tdsDoseDuration = constrain((unsigned long)output, 0, MAX_DOSE_TIME);
 
-  if (tdsDoseDuration >= MIN_DOSE_TIME) {
-    digitalWrite(RELAY_FERTA, HIGH);
-    digitalWrite(RELAY_FERTB, HIGH);
-    isTDSDosing = true;
-    tdsDoseStartTime = now;
-    Serial.printf("🌱 [PID TDS Small Tank] Err: +%.0f ppm | Pump A+B ON %lu ms\n", 
-                  tds_error, tdsDoseDuration);
-  }
+  // [CHANGED] จ่ายทุกครั้งที่ออกนอก deadband: ขั้นต่ำ MIN_DOSE_TIME, สูงสุด MAX_DOSE_TIME
+  tdsDoseDuration = constrain((unsigned long)max(output, 0.0f), MIN_DOSE_TIME, MAX_DOSE_TIME);
+
+  digitalWrite(RELAY_FERTA, HIGH);
+  digitalWrite(RELAY_FERTB, HIGH);
+  isTDSDosing = true;
+  tdsDoseStartTime = now;
+  Serial.printf("🌱 [PID TDS Small Tank] Err: +%.0f ppm | Pump A+B ON %lu ms\n", 
+                tds_error, tdsDoseDuration);
 }
 
 //================ MANUAL CONTROLS =================
