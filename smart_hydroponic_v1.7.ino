@@ -350,7 +350,7 @@ void setup() {
   Firebase.reconnectWiFi(true);
 
   dht.begin();
-  Serial.println("=== Hydroponic Controller Ready (Small-Tank PID Mode + Fake pH) ===");
+  Serial.println("=== Hydroponic Controller Ready (Small-Tank PID Mode +  pH) ===");
   esp_task_wdt_reset();
 }
 
@@ -484,7 +484,7 @@ void readPH() {
   }
   float voltage = (sum / 15.0) * (3.3 / 4095.0);
   
-  // รวมค่าจริงกับค่าจำลอง (Fake Reaction)
+  
   float instantPH = voltageToPH(voltage) + mockPhOffsetEffect + manualMockEffect; 
 
   if (!phFilterInit) {
@@ -902,7 +902,7 @@ void sendPump() {
 }
 
 void printStatus() {
-  Serial.println("=== Hydroponic Status (Small Tank PID + Fake pH) ===");
+  Serial.println("=== Hydroponic Status (Small Tank PID) ===");
   Serial.printf("Mode: %s | Profile: %s\n", mode.c_str(), plantProfile.c_str());
   Serial.printf("pH: %.2f (Target: %.1f, Err: %+.2f) | TDS: %.0f ppm (Target: %.0f)\n", 
                 phValue, PH_TARGET, (phValue - PH_TARGET), tdsValue, TDS_TARGET);
